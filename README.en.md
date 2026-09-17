@@ -8,9 +8,55 @@ Purple Gold is a software engineering specification for the new paradigm of **hu
 
 ## The spec at a glance
 
-- **Exoskeleton spec**: the module system of the project. Every module has an ALLOY document (`ALLOY.md`) recording its summary, dependencies, boundary relations, and interface contracts; alignment and validation scripts keep documents and directory structure consistent. Read and maintained by AI.
-- **Endoskeleton spec**: how humans and AI drive engineering forward together. The main line is the eight-stage **Spine process** (requirements → feature design → interaction design → UI visual design → architecture & contracts → development planning → development & testing → acceptance); the supporting line is the **Rib specs** (requirements baseline, change records, deployment & operations, effort estimation, and more — thirteen initial specs). Read and maintained by human engineers.
-- **Iterator**: versioning and upgrade rules of the spec itself. A project pins its spec version in `purplegold/VERSION`; upgrading = replacing the static rules layer + migrating the dynamic documents layer.
+### Exoskeleton spec: modules and ALLOY documents
+
+The Exoskeleton spec governs all modules in the engineering tree and their relations; it is read and maintained by AI:
+
+- **Module recognition**: any file or folder playing an independent role is a module. Every folder module has exactly one **ALLOY document** (`ALLOY.md` inside it), created, updated, moved, and deleted together with the module.
+- **ALLOY document**: a fixed format with seven required sections — module summary, child-module pointers, internal relations, boundary relations, parent pointer, interface & behavior contracts; internal relations use a strict mermaid subset as the single authoritative representation of dependencies.
+- **Dependency rules**: dependencies only between sibling modules, always acyclic; cross-level dependencies are expressed as dependencies between parent modules instead.
+- **Script-enforced consistency**: `align.py` aggregates module information into the root module's derived zone (project-wide module index, relation overviews); `validate.py` checks that documented declarations match the actual directory structure — work cannot be wrapped up while checks fail.
+
+### Endoskeleton spec: the Spine process (eight stages)
+
+The Spine process is the main line of a project's design and development work, eight stages in order; stage outputs go to `紫金产物/脊椎产物/`:
+
+| Stage | Focus | Main outputs |
+|---|---|---|
+| S01 需求确认 | Nail down requirements | Requirements checklist, constraints & non-functional requirements, user roles, glossary |
+| S02 功能初步设计 | Features & business flows | Feature list, business flow descriptions, scope statement (optional: use cases) |
+| S03 功能交互设计 | Pages & interaction | Page list, page-flow diagram, per-page interaction descriptions, user paths, empty/error states |
+| S04 UI 视觉设计 | Visual design | UI design brief (optional), visual drafts, design standards, component list, asset list |
+| S05 工程架构与契约 | Technical solution | Tech selection rationale, module architecture, data models, interface & behavior contracts, external services list |
+| S06 制定开发计划 | Tasks & schedule | Task breakdown, ordering & milestones, completion criteria, assignment notes |
+| S07 开发和测试 | Implementation | Code, engineering test records, deviation records |
+| S08 实机测试和验收 | Real-environment acceptance | Test plan, case library, test report (with screenshots), defect list, acceptance checklist |
+
+The Spine process is the project's root driving force: stage outputs may change, but any change triggers a sequential back-flow review of all other stages.
+
+### Endoskeleton spec: the Rib specs (thirteen built-in)
+
+Rib specs are flexible, non-linear rules: executed when their trigger arrives, or enabled on demand by human engineers; instances may trim or add specs. Class A has automatic triggers (AF = ahead of the Spine, outputs feed the Spine process; AB = behind the Spine, registering and maintaining records based on Spine outputs); class M has no automatic trigger and is enabled manually:
+
+| No. | Spec | In one line |
+|---|---|---|
+| AF01 | 提示词节点 | Record every prompt as a node (index, timestamp, original text, notes) |
+| AF02 | 需求基线 | Update the requirements baseline and its change log before anything else whenever input contains requirements — the ultimate source of all requirements |
+| AB03 | 项目最新状态 | On any status change, update the three status documents (Spine progress, Rib progress, exoskeleton implementation); latest state only |
+| AB04 | 脊椎产物变更记录 | Append a record (with back-flow review conclusion) for every Spine-output change |
+| AB05 | 需求追溯表 | Maintain the mapping: requirement → feature → page → module → task → test case |
+| AB06 | 美术素材备份 | Back up originals and derived variants of newly referenced art assets, with an asset list |
+| M01 | 部署和运维 | Deployment and operations, enabled by human decision |
+| M02 | 修复和优化 | Record each fix/optimization session; functional fixes must be retested |
+| M03 | 上架 | Store-release management for store-distributed projects (mobile apps, mini programs) |
+| M04 | 工作量评估 | Fixed-formula effort estimation for pricing and macro scheduling |
+| M05 | 甲方原始文件 | Collect client-provided original files into timestamped folders |
+| M06 | 对外文档 | Manage four client-facing documents (MD authoritative, DOCX derived) |
+| M07 | 账号密码管理 | Central registry of project accounts and passwords (plaintext; requires a private repo) |
+
+### Iterator: versions and upgrades
+
+A project pins its spec version in `purplegold/VERSION`; upgrading = replacing `purplegold/` with the new instance template and migrating `紫金产物/` per the change record.
 
 ## What this skill does
 
