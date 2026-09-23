@@ -140,8 +140,8 @@ def check_instance_skeleton(root):
     for name in ("脊椎流程进展.md", "肋骨规范进展.md", "外骨骼实现情况.md"):
         if not (ab03 / name).is_file():
             errors.append(f"实例骨架：紫金产物/肋骨产物/AB03-项目最新状态/{name} 未就位")
-    if not (root / "紫金产物" / "规范反馈.md").is_file():
-        errors.append("实例骨架：紫金产物/规范反馈.md 未就位")
+    if not (root / "紫金产物" / "紫金规范反馈.md").is_file():
+        errors.append("实例骨架：紫金产物/紫金规范反馈.md 未就位")
     if not (root / "purplegold" / "VERSION").is_file():
         errors.append("实例骨架：purplegold/VERSION 未就位")
     return errors
@@ -164,7 +164,7 @@ def cmd_validate(root):
         for e in errors:
             print(f"  - {e}")
         return 1
-    print(f"校验通过：{len(modules)} 个文件夹模块；AB03 三份状态文档、规范反馈.md 与 VERSION 就位。")
+    print(f"校验通过：{len(modules)} 个文件夹模块；AB03 三份状态文档、紫金规范反馈.md 与 VERSION 就位。")
     return 0
 
 

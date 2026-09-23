@@ -111,7 +111,7 @@ All detailed rules live in the bundled instance template (and, after initializat
 
 ## Feedback
 
-- Defects and suggestions about the spec: write them in your project's `紫金产物/规范反馈.md` (the instance-to-origin feedback channel), or open an Issue in this repository.
+- Defects and suggestions about the spec: write them in your project's `紫金产物/紫金规范反馈.md` (the instance-to-origin feedback channel), or open an Issue in this repository.
 
 ## License
 
