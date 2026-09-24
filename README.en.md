@@ -51,7 +51,7 @@ Rib specs are flexible, non-linear rules: executed when their trigger arrives, o
 | M03 | 上架 | Store-release management for store-distributed projects (mobile apps, mini programs) |
 | M04 | 工作量评估 | Fixed-formula effort estimation for pricing and macro scheduling |
 | M05 | 甲方原始文件 | Collect client-provided original files into timestamped folders |
-| M06 | 对外文档 | Manage four client-facing documents (MD authoritative, DOCX derived) |
+| M06 | 对外文档 | Manage three client-facing document types (MD authoritative, DOCX derived) |
 | M07 | 账号密码管理 | Central registry of project accounts and passwords (plaintext; requires a private repo) |
 
 ### Iterator: versions and upgrades
