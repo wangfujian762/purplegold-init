@@ -5,6 +5,7 @@
 校验项见 purplegold/RULES.md 第 2.5 节（以彼为权威）；退出码 0 = 全部通过，1 = 存在问题。
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -137,13 +138,110 @@ def check_derived_aligned(root, modules):
 def check_instance_skeleton(root):
     errors = []
     ab03 = root / "紫金产物" / "肋骨产物" / "AB03-项目最新状态"
-    for name in ("脊椎流程进展.md", "肋骨规范进展.md", "外骨骼实现情况.md"):
+    for name in ("脊椎流程进展.md", "肋骨规范进展.md", "外骨骼实现情况.md", "紫金规范升级记录.md"):
         if not (ab03 / name).is_file():
             errors.append(f"实例骨架：紫金产物/肋骨产物/AB03-项目最新状态/{name} 未就位")
     if not (root / "紫金产物" / "紫金规范反馈.md").is_file():
         errors.append("实例骨架：紫金产物/紫金规范反馈.md 未就位")
     if not (root / "purplegold" / "VERSION").is_file():
         errors.append("实例骨架：purplegold/VERSION 未就位")
+    return errors
+
+
+def module_full_names(modules):
+    """全部模块（含单文件模块）的全名集合：从根模块到本模块的命名链，以 "." 连接。"""
+    by_path = {}
+    for path, m in modules.items():
+        if not m.name:
+            continue
+        parts = path.rstrip("/").split("/")
+        chain = []
+        for i in range(1, len(parts) + 1):
+            anc = modules.get("/".join(parts[:i]) + "/")
+            if anc is None or not anc.name:
+                chain = None
+                break
+            chain.append(anc.name)
+        if chain:
+            by_path[path] = ".".join(chain)
+    names = set(by_path.values())
+    for path, m in modules.items():
+        base = by_path.get(path)
+        if not base:
+            continue
+        for cpath, cname, _ in m.children:
+            if not cpath.endswith("/"):
+                names.add(base + "." + cname)
+    return names
+
+
+AB05_COLS = ["需求编号", "需求摘要", "功能", "页面", "模块全名", "任务", "用例"]
+AB05_ID_RE = re.compile(r"TC\d+|R\d+|F\d+|P\d+|T\d+")
+AB05_EMPTY = {"", "-", "—", "/", "无", "（无）", "（暂无）"}
+
+
+def check_ab05_trace(root, modules):
+    """AB05-需求追溯表：格式与编号校验。产物文件存在时才检查；
+    完整性检查（每条需求至少落到一个模块与一条用例）在 S08 产物文件夹出现后启用。"""
+    trace = root / "紫金产物" / "肋骨产物" / "AB05-需求追溯表" / "需求追溯表.md"
+    if not trace.is_file():
+        return []
+    errors = []
+    header = None
+    rows = []
+    for line in trace.read_text(encoding="utf-8").splitlines():
+        s = line.strip()
+        if not s.startswith("|"):
+            continue
+        cells = [c.strip() for c in s.strip("|").split("|")]
+        if header is None:
+            if "需求编号" in cells:
+                header = cells
+            continue
+        if all(set(c) <= set("-: ") for c in cells):  # 表格分隔行
+            continue
+        rows.append(cells)
+    if header is None:
+        return ["需求追溯表：未找到表头含「需求编号」列的 Markdown 表格"]
+    for col in AB05_COLS:
+        if col not in header:
+            errors.append(f"需求追溯表：表头缺少固定列「{col}」（固定七列：{'、'.join(AB05_COLS)}）")
+    if errors:
+        return errors
+    idx = {c: header.index(c) for c in AB05_COLS}
+
+    s01 = root / "紫金产物" / "脊椎产物" / "S01-需求确认" / "01-需求确认清单.md"
+    s01_text = s01.read_text(encoding="utf-8") if s01.is_file() else None
+    s08_exists = (root / "紫金产物" / "脊椎产物" / "S08-实机测试和验收").is_dir()
+    full_names = module_full_names(modules)
+
+    seen = {}
+    for n, cells in enumerate(rows, 1):
+        cells += [""] * (len(header) - len(cells))
+        rid_cell = cells[idx["需求编号"]]
+        rids = [i for i in AB05_ID_RE.findall(rid_cell) if i.startswith("R")]
+        if len(rids) != 1:
+            errors.append(f"需求追溯表第 {n} 行：需求编号列应恰好含一个 R 编号，实际为 {rid_cell!r}")
+            continue
+        rid = rids[0]
+        if rid in seen:
+            errors.append(f"需求追溯表：需求编号 {rid} 重复（第 {seen[rid]} 行与第 {n} 行）")
+        else:
+            seen[rid] = n
+        if s01_text is not None and not re.search(r"(?<![A-Za-z0-9])" + rid + r"(?![0-9])", s01_text):
+            errors.append(f"需求追溯表：需求编号 {rid} 未出现在 S01 需求确认清单中（编号存在性）")
+        mod_cell = cells[idx["模块全名"]].strip()
+        case_cell = cells[idx["用例"]].strip()
+        if s08_exists:
+            if mod_cell in AB05_EMPTY:
+                errors.append(f"需求追溯表第 {n} 行（{rid}）：模块全名列为空——每条需求至少落到一个模块")
+            if case_cell in AB05_EMPTY:
+                errors.append(f"需求追溯表第 {n} 行（{rid}）：用例列为空——每条需求至少落到一条用例")
+        if mod_cell not in AB05_EMPTY:
+            for name in re.split(r"[、，,]", mod_cell):
+                name = name.strip()
+                if name and name not in full_names:
+                    errors.append(f"需求追溯表第 {n} 行（{rid}）：模块全名 {name!r} 不是模块树中已登记的模块")
     return errors
 
 
@@ -157,6 +255,7 @@ def cmd_validate(root):
         errors += check_declared_paths(modules)
         errors += check_graphs(modules)
         errors += check_derived_aligned(root, modules)
+        errors += check_ab05_trace(root, modules)
     errors += check_instance_skeleton(root)
 
     if errors:
@@ -164,7 +263,7 @@ def cmd_validate(root):
         for e in errors:
             print(f"  - {e}")
         return 1
-    print(f"校验通过：{len(modules)} 个文件夹模块；AB03 三份状态文档、紫金规范反馈.md 与 VERSION 就位。")
+    print(f"校验通过：{len(modules)} 个文件夹模块；AB03 三份状态文档与升级记录骨架、紫金规范反馈.md 与 VERSION 就位。")
     return 0
 
 
